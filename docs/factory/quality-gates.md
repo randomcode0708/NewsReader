@@ -17,11 +17,12 @@ are weak, that claim is false.**
 
 ## Gate ladder
 
-Ordered by cost. Each stage runs only if the previous passed.
+Ordered by cost — each stage runs only if the previous passed. Gates exist to enforce
+`constitution.md`; every gate below traces to a rule there.
 
 | # | Gate | Protects against | Runtime |
 |---|---|---|---|
-| 0 | Intent binding | Scope creep, spec drift | seconds |
+| 0 | Spec binding | Scope creep, spec drift | seconds |
 | 1 | Static analysis | Type errors, lint, dead code | seconds |
 | 2 | Contract | Frontend/backend drift | seconds |
 | 3 | Unit tests | Logic regressions | ~1 min |
@@ -35,16 +36,18 @@ Ordered by cost. Each stage runs only if the previous passed.
 
 ---
 
-## 0. Intent binding
+## 0. Spec binding
 
-- PR must reference exactly one intent record (`/intents/NNNN-*.md`) with `status: ready`.
-- **The record's acceptance criteria must be unmodified relative to the base branch.**
+- PR must reference exactly one task from one spec (`/specs/NNN-*/tasks.md`).
+- The spec must have completed `/clarify` — a spec with unresolved questions is not
+  buildable (`sdlc.md`).
+- **The spec's acceptance criteria must be unmodified relative to the base branch.**
   If the PR edits them, the gate fails outright. Editing criteria to match the
-  implementation converts a failed build into a passing one — it is the single most
-  dangerous move available to a building agent, so it's blocked mechanically rather than
-  discouraged in prose.
-- Files changed must be plausibly within the record's stated scope; a PR touching areas
-  the record never mentions is flagged for the review agent.
+  implementation converts a failed build into a passing one — constitution rule 21, and the
+  single most dangerous move available to a building agent, so it's blocked mechanically
+  rather than discouraged in prose.
+- Files changed must be plausibly within the spec's stated scope; a PR touching areas the
+  spec never mentions is flagged for the review agent.
 
 ## 1. Static analysis
 
@@ -68,7 +71,7 @@ frontend/backend mismatches (`../design/architecture.md`).
 
 ## 3. Unit tests
 
-- Every acceptance criterion in the intent record maps to at least one test. The review
+- Every acceptance criterion in the spec maps to at least one test. The review
   agent audits this mapping (`review-policy.md`) — coverage percentage alone does not
   prove the *right* things are tested.
 - Frozen clock, seeded randomness, no network. A unit test that hits the network is a
@@ -122,7 +125,7 @@ Real Postgres (ephemeral container), real queue, mocked LLM and HTTP.
   LLM prompts. Any PR that changes how fetched content enters a prompt is flagged for
   human review. A hostile publisher embedding instructions in an article is a real threat
   to a system that summarises and synthesises unattended.
-- No new outbound network destination without an explicit intent record.
+- No new outbound network destination without an explicit spec.
 
 ## 8. Cost regression ⭐
 
@@ -130,7 +133,7 @@ The cost model is a design constraint (`../design/llm-and-cost.md`), so it's a g
 
 - The pipeline integration run records token usage per stage; CI compares against a
   committed baseline. **A >20% per-article or per-synthesis increase fails**, and must be
-  either justified in the intent record or fixed.
+  either justified in the spec or fixed.
 - Batch-path assertion: the summarisation stage must actually use the Batch API. If a
   refactor silently drops batching, our dominant cost line doubles with no other symptom.
 - New LLM call sites outside the gateway fail gate 1; new call sites *inside* the gateway
@@ -192,6 +195,6 @@ Blocked structurally:
 
 ## Related
 - `review-policy.md` — what happens after the gates pass
-- `intent-record-template.md` — the spec these check against
+- `constitution.md` — the rules these gates enforce
 - `../design/data-model.md` — source of the invariants in gate 4
 - `../design/llm-and-cost.md` — source of the baselines in gate 8

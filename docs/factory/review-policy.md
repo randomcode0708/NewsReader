@@ -5,6 +5,21 @@ Status: DRAFT — 2026-09-10
 What happens after the gates pass. Defines exactly what auto-merges, what a review agent
 inspects, and what always reaches a human.
 
+> ## ⚠️ CURRENT STATE: STAGE A — nothing auto-merges
+>
+> Per `sdlc.md`, the project is at **Stage A** of the autonomy ladder: **every PR gets human
+> review**, regardless of risk level or gate results. The escalation list below is therefore
+> not yet load-bearing — it describes the target state (Stage C).
+>
+> **Read Stage A's purpose correctly:** the human is not there to review code. They are
+> there to **calibrate the gates by finding what the gates missed.** Every defect a human
+> catches that no gate caught is a *gate bug* — fix the gate in a follow-up spec, not just
+> the PR. If Stage A is used as ordinary code review, the project never earns its way out
+> of it.
+>
+> Exit criterion to Stage B: ≥20 merged PRs where every defect reaching review was **also**
+> flagged by a gate — evidence that the gates, not the human, are doing the work.
+
 ## Two-stage review
 
 **Stage 1 — automated review agent.** Runs on every PR that clears the gates.
@@ -13,7 +28,7 @@ inspects, and what always reaches a human.
 > DECISION (2026-09-10): **The reviewing agent is never the authoring agent, and starts
 > with fresh context.** A model reviewing its own work in the same session mostly
 > rationalises it — it has already committed to the approach and will defend it. The
-> reviewer gets the intent record, the diff, and the design docs; **not** the author's
+> reviewer gets the spec, the diff, and the design docs; **not** the author's
 > reasoning or session history.
 
 ## Stage 1 — the review agent
@@ -23,7 +38,7 @@ Its job is **adversarial**: find reasons this PR should not merge. A review that
 
 Checklist, in priority order:
 
-1. **Acceptance-criteria audit.** For each criterion in the intent record: is it actually
+1. **Acceptance-criteria audit.** For each criterion in the spec: is it actually
    implemented, and is there a test that would fail if it broke? Name the test. A
    criterion with no corresponding test is a blocking finding — this is the single
    highest-value check the reviewer performs.
@@ -49,12 +64,16 @@ may **not** approve a PR whose findings it hasn't resolved, and may not merge.
 
 ## Stage 2 — human review escalation list
 
+**Applies from Stage B onward.** At Stage A everything reaches a human, so this list is
+currently a superset of nothing. It is written now so that advancing the ladder is a
+config change rather than a design exercise.
+
 A PR reaches a human if **any** of these are true. This is the boundary of the
 "human doesn't read diffs" claim, and it is deliberately wide at the start.
 
 | Trigger | Why |
 |---|---|
-| `risk: high` in the intent record | Author's judgement |
+| `risk: high` in the spec | Author's judgement |
 | **Modifies any gate, threshold, eval baseline, or cost baseline** | The one PR type that can disable the safety net |
 | **Modifies `docs/factory/` or `docs/design/`** | Changing the rules ≠ following them |
 | **Destructive migration** (`DROP`, type change, `NOT NULL` on populated column) | Irreversible data loss |
@@ -64,15 +83,16 @@ A PR reaches a human if **any** of these are true. This is the boundary of the
 | **Changes how fetched content enters a prompt** | Prompt-injection surface (`quality-gates.md` §7) |
 | Review agent requested changes twice on the same PR | The loop isn't converging; a human should look |
 | Any gate was overridden | Should be impossible; if it happened, investigate |
-| Diff exceeds a size threshold | Large diffs defeat automated review — split the intent |
+| Diff exceeds a size threshold | Large diffs defeat automated review — split the task |
+| **Amends `constitution.md`** | A rule change outranks every spec; never agent-mergeable |
 
-Everything else, with green gates and an agent approval, **auto-merges**.
+From Stage B, everything else with green gates and an agent approval **auto-merges**.
 
 ## Merge rules
 
-- **One intent record = one PR.** Squash-merge; the commit message references the record.
-- Auto-merge requires: all gates green **and** review-agent approval **and** not on the
-  escalation list.
+- **One task = one PR.** Squash-merge; the commit message references the spec and task.
+- Auto-merge (Stage B+) requires: all gates green **and** review-agent approval **and** not
+  on the escalation list.
 - Human-review PRs never auto-merge, even when green.
 - A PR open >7 days goes stale → close and re-plan. Long-lived agent branches rot against
   a moving main.
@@ -81,7 +101,7 @@ Everything else, with green gates and an agent approval, **auto-merges**.
 
 - Deploy to staging automatically; production deploys on a schedule or on demand.
 - **Auto-rollback** on health-check failure, error-rate spike, or cost-per-hour breach.
-- A rollback **auto-files a new intent record** describing what regressed. Failures
+- A rollback **auto-files a new spec** describing what regressed. Failures
   re-enter the queue as work, rather than relying on someone remembering.
 
 ## Escalation protocol (for agents)
@@ -91,24 +111,27 @@ cheap outcome; a silent workaround is expensive and often invisible.
 
 | Situation | Action |
 |---|---|
-| Ambiguous acceptance criterion | Stop. Comment on the intent record with the specific ambiguity and the interpretations. |
-| Would violate a design invariant | Stop. Escalate — invariants are not overridable by an intent record. |
-| Intent conflicts with a design `> DECISION` | Stop. The conflict is a decision for the human, not a thing to resolve unilaterally. |
+| Ambiguous acceptance criterion | Stop. Comment on the spec with the specific ambiguity and the candidate interpretations. Ideally this was caught at `/clarify`. |
+| Would violate a constitution rule | Stop. Rules outrank specs (constitution rule 24) — a spec asking for a forbidden thing is a wrong spec. |
+| Spec conflicts with a design `> DECISION` | Stop. The conflict is a decision for the human, not a thing to resolve unilaterally. |
 | A gate fails and you can't fix the code | Stop. **Never** weaken the gate. |
 | The fix requires a design change | Stop. Design changes are their own PR with human review. |
-| You noticed an unrelated problem | File a new intent record. Do not fix it here. |
+| You noticed an unrelated problem | File a new spec. Do not fix it here. |
 
-## Reviewing this policy
+## Advancing the ladder / narrowing this list
 
-The escalation list starts deliberately wide. Narrowing it is legitimate — but only
-**with evidence**: a category of change that has auto-merged cleanly many times, with no
-incidents, is a candidate for removal.
+Both the autonomy stage (`sdlc.md`) and this escalation list start deliberately
+restrictive. Loosening either is legitimate — but only **with evidence**: a category of
+change that has passed cleanly many times, with no incidents, is a candidate.
 
-> DECISION (2026-09-10): **The escalation list is narrowed only by a human, backed by
-> data, never by an agent proposing it's ready.** Narrowing this list is the highest-
-> leverage way to break the factory, because it looks like progress.
+> DECISION (2026-09-10): **The autonomy stage is advanced, and this list narrowed, only by
+> a human backed by incident data — never by an agent proposing the project is ready.**
+> These are the two highest-leverage ways to break the factory, precisely because both look
+> like progress.
 
 ## Related
+- `sdlc.md` — the autonomy ladder and what Stage A is for
+- `constitution.md` — the rules that outrank any spec
 - `quality-gates.md` — what must pass before review
-- `intent-record-template.md` — the `risk` field driving escalation
+- `sdlc.md` — the lifecycle and autonomy ladder
 - `README.md` — the human's three roles

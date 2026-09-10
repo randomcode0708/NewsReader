@@ -27,11 +27,12 @@ docs/
     ingestion.md         RSS-first crawler, dedupe, source discovery/registry, legal posture
     llm-and-cost.md      Model pricing, cost per user by usage, model tiering, caching/batch
   factory/               Phase 2 — how software gets built (not what)
-    README.md            The factory flow, the human's three roles, the honest risk
-    intent-record-template.md  The unit of work: one record -> one PR
+    README.md            The factory, the human's three roles, the honest risk
+    sdlc.md              THE DAY-TO-DAY LIFECYCLE — start here. Spec Kit + autonomy ladder
+    constitution.md      Non-negotiable rules; each with the failure it prevents
     quality-gates.md     Every automated check and what it protects
     review-policy.md     What auto-merges, what escalates to a human
-intents/                 One file per intent record; each drives a PR
+specs/                   Spec Kit working area: one dir per feature (spec/plan/tasks)
 ```
 
 ## Conventions
