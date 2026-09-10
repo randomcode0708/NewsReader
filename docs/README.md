@@ -21,11 +21,11 @@ docs/
     source-discovery.md  Intent -> suggested domains -> suggested sites -> user selection
     view-primitives.md   The 3 core view types (Edition / Stream / Dossier); Dossier is the heart
     intent-model.md      How user intent becomes a structured query + ranking policy
-  design/                (Phase 1.5 — created after product/ is locked)
-    architecture.md
-    data-model.md
-    ingestion.md
-    llm-and-cost.md
+  design/                Phase 1.5 — technical design (input to the factory)
+    architecture.md      Stack, pipeline stages, shared-vs-per-user split, job queue
+    data-model.md        Authoritative schema + invariants the factory must enforce
+    ingestion.md         RSS-first crawler, dedupe, source discovery/registry, legal posture
+    llm-and-cost.md      Model pricing, cost per user by usage, model tiering, caching/batch
   factory/               (Phase 2)
     intent-record-template.md
     quality-gates.md
